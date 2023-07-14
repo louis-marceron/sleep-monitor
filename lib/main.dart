@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+
 import 'package:provider/provider.dart';
+
+import 'sleep/home_view.dart';
+import 'sleep/sleep_controller.dart';
+import 'settings/settings_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -30,10 +35,16 @@ class HomePage extends StatelessWidget {
     }
 
     return Scaffold(
+      bottomNavigationBar: const App(),
       body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(30),
-          child: sleepButton,
+        child: Column(
+          children: [
+            const SleepList(),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: sleepButton,
+            ),
+          ],
         ),
       ),
     );
@@ -50,155 +61,92 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Sleep monitor',
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xff6750A4),
+            brightness: Brightness.dark,
+          ),
           useMaterial3: true,
         ),
-        home: const HomePage(),
+        home: const App(),
       ),
     );
   }
 }
 
-class Sleep {
-  final DateTime start;
-  DateTime? end;
+class App extends StatefulWidget {
+  const App({super.key});
 
-  Sleep(this.start);
-  Sleep.finished(this.start, this.end);
+  @override
+  State<App> createState() => _AppState();
+}
 
-  bool isSleeping() => end == null;
+class _AppState extends State<App> {
+  int currentPageIndex = 0;
 
-  void stopSleeping() {
-    if (!isSleeping()) {
-      throw Exception('Cannot stop sleeping if you\'re not sleeping dummy');
-    }
-    end = DateTime.now();
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: currentPageIndex,
+        backgroundColor: Colors.transparent,
+        onDestinationSelected: (int index) {
+          setState(() {
+            currentPageIndex = index;
+          });
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.trending_up),
+            label: 'Insights',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: [
+          const Home(),
+          const Placeholder(),
+          const MyWidget(),
+        ][currentPageIndex],
+      ),
+    );
   }
 }
 
-class SleepModel extends ChangeNotifier {
-  List<Sleep> _sleepList = <Sleep>[];
+class SleepCard extends StatelessWidget {
+  final Sleep sleep;
 
-  List<Sleep> get sleepList => _sleepList;
+  const SleepCard({super.key, required this.sleep});
 
-  bool isSleeping() {
-    return _sleepList.isNotEmpty && sleepList.last.isSleeping();
-  }
+  @override
+  Widget build(BuildContext context) {
+    final String sleepLength =
+        sleep.end?.difference(sleep.start).toString() ?? 'Currently sleeping';
 
-  void startSleeping() {
-    if (isSleeping()) {
-      throw Exception('Cannot add a new sleep while already sleeping');
-    }
-    _sleepList.add(Sleep(DateTime.now()));
-    notifyListeners();
-  }
-
-  void stopSleeping() {
-    if (!isSleeping()) {
-      throw Exception('Cannot stop sleeping if you\'re not sleeping dummy');
-    }
-    _sleepList.last.stopSleeping();
-    notifyListeners();
+    return Card(
+      child: ListTile(
+        title: Text(sleepLength),
+      ),
+    );
   }
 }
 
-//class MyHomePage extends StatefulWidget {
-//  const MyHomePage({super.key, required this.title});
+class SleepList extends StatelessWidget {
+  const SleepList({super.key});
 
-//  // This widget is the home page of your application. It is stateful, meaning
-//  // that it has a State object (defined below) that contains fields that affect
-//  // how it looks.
+  @override
+  Widget build(BuildContext context) {
+    SleepModel sleepModel = context.watch<SleepModel>();
+    List<SleepCard> sleepList =
+        sleepModel.sleepList.map((sleep) => SleepCard(sleep: sleep)).toList();
 
-//  // This class is the configuration for the state. It holds the values (in this
-//  // case the title) provided by the parent (in this case the App widget) and
-//  // used by the build method of the State. Fields in a Widget subclass are
-//  // always marked "final".
-
-//  final String title;
-
-//  @override
-//  State<MyHomePage> createState() => _MyHomePageState();
-//}
-
-//class _MyHomePageState extends State<MyHomePage> {
-//  int _counter = 0;
-
-//  void _incrementCounter() {
-//    setState(() {
-//      // This call to setState tells the Flutter framework that something has
-//      // changed in this State, which causes it to rerun the build method below
-//      // so that the display can reflect the updated values. If we changed
-//      // _counter without calling setState(), then the build method would not be
-//      // called again, and so nothing would appear to happen.
-//      _counter++;
-//    });
-//  }
-
-//  @override
-//  Widget build(BuildContext context) {
-//    // This method is rerun every time setState is called, for instance as done
-//    // by the _incrementCounter method above.
-//    //
-//    // The Flutter framework has been optimized to make rerunning build methods
-//    // fast, so that you can just rebuild anything that needs updating rather
-//    // than having to individually change instances of widgets.
-//    return Scaffold(
-//      appBar: AppBar(
-//        // TRY THIS: Try changing the color here to a specific color (to
-//        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-//        // change color while the other colors stay the same.
-//        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-//        // Here we take the value from the MyHomePage object that was created by
-//        // the App.build method, and use it to set our appbar title.
-//        title: Text(widget.title),
-//      ),
-//      body: Center(
-//        // Center is a layout widget. It takes a single child and positions it
-//        // in the middle of the parent.
-//        child: Column(
-//          // Column is also a layout widget. It takes a list of children and
-//          // arranges them vertically. By default, it sizes itself to fit its
-//          // children horizontally, and tries to be as tall as its parent.
-//          //
-//          // Column has various properties to control how it sizes itself and
-//          // how it positions its children. Here we use mainAxisAlignment to
-//          // center the children vertically; the main axis here is the vertical
-//          // axis because Columns are vertical (the cross axis would be
-//          // horizontal).
-//          //
-//          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-//          // action in the IDE, or press "p" in the console), to see the
-//          // wireframe for each widget.
-//          mainAxisAlignment: MainAxisAlignment.center,
-//          children: <Widget>[
-//            const Text(
-//              'You have pushed the button this many times:',
-//            ),
-//            Text(
-//              '$_counter',
-//              style: Theme.of(context).textTheme.headlineMedium,
-//            ),
-//          ],
-//        ),
-//      ),
-//      floatingActionButton: IncrementButton(
-//          incrementCounter:
-//              _incrementCounter), // This trailing comma makes auto-formatting nicer for build methods.
-//    );
-//  }
-//}
-
-//class IncrementButton extends StatelessWidget {
-//  const IncrementButton({super.key, required this.incrementCounter});
-
-//  final void Function() incrementCounter;
-
-//  @override
-//  Widget build(BuildContext context) {
-//    return FloatingActionButton(
-//      onPressed: incrementCounter,
-//      tooltip: 'Increment',
-//      child: const Icon(Icons.add),
-//    );
-//  }
-//}
+    return Expanded(child: ListView(children: sleepList));
+  }
+}
