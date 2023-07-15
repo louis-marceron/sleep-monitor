@@ -64,12 +64,13 @@ class SleepTimer extends StatefulWidget {
 
 class _SleepTimerState extends State<SleepTimer> {
   Duration? _sleepLength;
+  late final Timer timer;
 
-  void _setTimer() {
+  Timer _setTimer() {
     // If I don't use listen: false, it crashes because only widgets can listen to providers.
     final SleepModel sleepModel =
         Provider.of<SleepModel>(context, listen: false);
-    Timer.periodic(
+    return Timer.periodic(
       const Duration(seconds: 1),
       (timer) => setState(() {
         if (sleepModel.isSleeping()) {
@@ -84,21 +85,16 @@ class _SleepTimerState extends State<SleepTimer> {
     );
   }
 
-  String _formatDuration(Duration d) {
-    String twoDigits(int n) {
-      if (n >= 10) return "$n";
-      return "0$n";
-    }
-
-    String twoDigitMinutes = twoDigits(d.inMinutes.remainder(60));
-    String twoDigitSeconds = twoDigits(d.inSeconds.remainder(60));
-    return "${twoDigits(d.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
+  @override
+  void dispose() {
+    super.dispose();
+    timer.cancel();
   }
 
   @override
   void initState() {
     super.initState();
-    _setTimer();
+    timer = _setTimer();
   }
 
   // FIXME I don't know if I should use dispose().
@@ -109,7 +105,7 @@ class _SleepTimerState extends State<SleepTimer> {
     final style = theme.textTheme.displayLarge!;
 
     if (_sleepLength != null) {
-      return Text(_formatDuration(_sleepLength!), style: style);
+      return Text(Sleep.formatDuration(_sleepLength!), style: style);
     } else {
       return Text('00:00:00', style: style);
     }

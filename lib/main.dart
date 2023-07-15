@@ -1,54 +1,13 @@
 import 'package:flutter/material.dart';
-
 import 'package:provider/provider.dart';
 
+import 'settings/settings_view.dart';
 import 'sleep/home_view.dart';
 import 'sleep/sleep_controller.dart';
-import 'settings/settings_view.dart';
+import 'insights/insights_view.dart';
 
 void main() {
   runApp(const MyApp());
-}
-
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final style = theme.textTheme.displayMedium!
-        .copyWith(color: theme.colorScheme.primary);
-
-    final SleepModel sleepModel = context.watch<SleepModel>();
-    ElevatedButton sleepButton;
-
-    if (sleepModel.isSleeping()) {
-      sleepButton = ElevatedButton(
-        onPressed: sleepModel.stopSleeping,
-        child: Text('Stop sleeping', style: style),
-      );
-    } else {
-      sleepButton = ElevatedButton(
-        onPressed: sleepModel.startSleeping,
-        child: Text('Start sleeping', style: style),
-      );
-    }
-
-    return Scaffold(
-      bottomNavigationBar: const App(),
-      body: Center(
-        child: Column(
-          children: [
-            const SleepList(),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: sleepButton,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class MyApp extends StatelessWidget {
@@ -112,41 +71,10 @@ class _AppState extends State<App> {
       body: SafeArea(
         child: [
           const Home(),
-          const Placeholder(),
+          const SleepList(),
           const MyWidget(),
         ][currentPageIndex],
       ),
     );
-  }
-}
-
-class SleepCard extends StatelessWidget {
-  final Sleep sleep;
-
-  const SleepCard({super.key, required this.sleep});
-
-  @override
-  Widget build(BuildContext context) {
-    final String sleepLength =
-        sleep.end?.difference(sleep.start).toString() ?? 'Currently sleeping';
-
-    return Card(
-      child: ListTile(
-        title: Text(sleepLength),
-      ),
-    );
-  }
-}
-
-class SleepList extends StatelessWidget {
-  const SleepList({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    SleepModel sleepModel = context.watch<SleepModel>();
-    List<SleepCard> sleepList =
-        sleepModel.sleepList.map((sleep) => SleepCard(sleep: sleep)).toList();
-
-    return Expanded(child: ListView(children: sleepList));
   }
 }
