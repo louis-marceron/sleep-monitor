@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
 import 'package:provider/provider.dart';
 
-import 'sleep_controller.dart';
+import '../models/app_model.dart';
+import '../models/sleep_model.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
@@ -33,10 +33,10 @@ class SleepButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    SleepModel sleepModel = context.watch<SleepModel>();
+    AppModel sleepModel = context.watch<AppModel>();
     FilledButton sleepButton;
 
-    if (sleepModel.isSleeping()) {
+    if (await sleepModel.isSleeping()) {
       sleepButton = FilledButton(
         onPressed: () => sleepModel.stopSleeping(),
         child: const Text('Stop sleeping'),
@@ -66,39 +66,6 @@ class _SleepTimerState extends State<SleepTimer> {
   Duration? _sleepLength;
   late final Timer timer;
 
-  Timer _setTimer() {
-    // If I don't use listen: false, it crashes because only widgets can listen to providers.
-    final SleepModel sleepModel =
-        Provider.of<SleepModel>(context, listen: false);
-    return Timer.periodic(
-      const Duration(seconds: 1),
-      (timer) => setState(() {
-        if (sleepModel.isSleeping()) {
-          setState(() {
-            _sleepLength =
-                DateTime.now().difference(sleepModel.getLastSleepStart()!);
-          });
-        } else {
-          _sleepLength = null;
-        }
-      }),
-    );
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    timer.cancel();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    timer = _setTimer();
-  }
-
-  // FIXME I don't know if I should use dispose().
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -109,5 +76,38 @@ class _SleepTimerState extends State<SleepTimer> {
     } else {
       return Text('00:00:00', style: style);
     }
+  }
+
+  @override
+  void dispose() {
+    timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    timer = _setTimer();
+  }
+
+  Timer _setTimer() {
+    // If I don't use listen: false, it crashes because only widgets can listen to providers.
+    final AppModel sleepModel =
+        Provider.of<AppModel>(context, listen: false);
+    return Timer.periodic(
+      const Duration(seconds: 1),
+      (timer) => setState(
+        () {
+          if (sleepModel.isSleeping()) {
+            setState(() {
+              _sleepLength =
+                  DateTime.now().difference(sleepModel.getLastSleepStart()!);
+            });
+          } else {
+            _sleepLength = null;
+          }
+        },
+      ),
+    );
   }
 }
